@@ -36,10 +36,10 @@
             margin: 0 auto;
         }
 
-        /* Auth Screen Styling */
+        /* Login Container Styling */
         .auth-container {
-            max-width: 420px;
-            margin: 50px auto;
+            max-width: 400px;
+            margin: 60px auto;
             background: var(--card-bg);
             padding: 32px;
             border-radius: 12px;
@@ -49,14 +49,8 @@
         }
 
         .auth-container h2 {
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
-
-        .auth-container p.subtitle {
-            font-size: 13px;
-            color: var(--text-muted);
             margin-bottom: 20px;
+            color: var(--primary);
         }
 
         .auth-toggle {
@@ -69,13 +63,6 @@
             color: var(--primary);
             cursor: pointer;
             font-weight: 600;
-        }
-
-        .otp-input {
-            letter-spacing: 8px;
-            font-size: 20px;
-            text-align: center;
-            font-weight: bold;
         }
 
         header {
@@ -330,37 +317,29 @@
 </head>
 <body>
 
-    <!-- OTP Authentication Screen -->
+    <!-- Authentication Screen -->
     <div id="auth-screen" class="auth-container">
-        <h2>Welcome to KhataBook</h2>
-        <p class="subtitle">Enter your Gmail or Mobile Number to receive an OTP</p>
-
-        <!-- Step 1: Request OTP -->
-        <div id="step-request">
-            <div class="form-group">
-                <label for="contact-input">Gmail Address or Mobile Number</label>
-                <input type="text" id="contact-input" placeholder="e.g. name@gmail.com or 9876543210">
-            </div>
-            <button class="btn btn-primary" style="width: 100%;" onclick="sendOTP()">Send Verification OTP</button>
+        <h2 id="auth-title">Login to KhataBook</h2>
+        <div class="form-group">
+            <label for="auth-username">Username</label>
+            <input type="text" id="auth-username" placeholder="Enter username">
         </div>
-
-        <!-- Step 2: Verify OTP -->
-        <div id="step-verify" style="display: none;">
-            <div class="form-group">
-                <label>Enter 4-Digit OTP sent to <strong id="sent-target"></strong></label>
-                <input type="text" id="otp-input" class="otp-input" maxlength="4" placeholder="••••">
-            </div>
-            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="verifyOTP()">Verify & Login</button>
-            <button class="btn" style="width: 100%; background: var(--text-muted);" onclick="resetAuthStep()">Back</button>
+        <div class="form-group">
+            <label for="auth-password">Password</label>
+            <input type="password" id="auth-password" placeholder="Enter password">
+        </div>
+        <button id="auth-btn" class="btn btn-primary" style="width: 100%;" onclick="handleAuth()">Login</button>
+        <div class="auth-toggle">
+            <span id="auth-toggle-btn" onclick="toggleAuthMode()">Don't have an account? Register</span>
         </div>
     </div>
 
-    <!-- Main KhataBook App Screen -->
+    <!-- Main Application Screen -->
     <div id="app-screen" style="display: none;">
         <header>
             <h1>📖 Digital KhataBook</h1>
             <div class="user-info">
-                <span>Account: <strong id="logged-user-name">User</strong></span>
+                <span>Welcome, <strong id="logged-user-name">User</strong></span>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </header>
@@ -440,15 +419,14 @@
     </div>
 
     <script>
-        // Application State
-        let generatedOTP = null;
-        let currentTarget = null;
+        // State variables
+        let isLoginMode = true;
         let currentUser = null;
         let customers = [];
         let transactions = [];
         let selectedCustomerId = null;
 
-        // Initialize Session
+        // Initialize session on startup
         function initSession() {
             const activeUser = localStorage.getItem('khata_active_user');
             if (activeUser) {
@@ -459,50 +437,43 @@
             }
         }
 
-        // Send OTP Simulation Handler
-        function sendOTP() {
-            const inputVal = document.getElementById('contact-input').value.trim();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const phoneRegex = /^[0-9]{10}$/;
-
-            if (!emailRegex.test(inputVal) && !phoneRegex.test(inputVal)) {
-                return alert("Please enter a valid Gmail address or 10-digit phone number.");
-            }
-
-            currentTarget = inputVal;
-            generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
-
-            // Display simulated popup notification containing generated OTP
-            alert(`[OTP Notification]\nYour 4-digit KhataBook verification code for ${currentTarget} is: ${generatedOTP}`);
-
-            document.getElementById('sent-target').innerText = currentTarget;
-            document.getElementById('step-request').style.display = 'none';
-            document.getElementById('step-verify').style.display = 'block';
+        // Toggle Login / Register UI
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "Login to KhataBook" : "Register on KhataBook";
+            document.getElementById('auth-btn').innerText = isLoginMode ? "Login" : "Register";
+            document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Don't have an account? Register" : "Already have an account? Login";
         }
 
-        // Verify OTP Handler
-        function verifyOTP() {
-            const enteredOTP = document.getElementById('otp-input').value.trim();
+        // Authentication Logic
+        function handleAuth() {
+            const userIn = document.getElementById('auth-username').value.trim();
+            const passIn = document.getElementById('auth-password').value.trim();
 
-            if (enteredOTP === generatedOTP) {
-                currentUser = currentTarget;
-                localStorage.setItem('khata_active_user', currentUser);
-                showAppScreen();
+            if (!userIn || !passIn) return alert("Please fill in both fields.");
+
+            let users = JSON.parse(localStorage.getItem('khata_users')) || {};
+
+            if (isLoginMode) {
+                if (users[userIn] && users[userIn] === passIn) {
+                    currentUser = userIn;
+                    localStorage.setItem('khata_active_user', currentUser);
+                    showAppScreen();
+                } else {
+                    alert("Invalid username or password.");
+                }
             } else {
-                alert("Incorrect OTP. Please try again.");
+                if (users[userIn]) return alert("Username already exists!");
+                users[userIn] = passIn;
+                localStorage.setItem('khata_users', JSON.stringify(users));
+                alert("Registration successful! You can now login.");
+                toggleAuthMode();
             }
-        }
-
-        function resetAuthStep() {
-            document.getElementById('step-request').style.display = 'block';
-            document.getElementById('step-verify').style.display = 'none';
-            document.getElementById('otp-input').value = '';
         }
 
         function logout() {
             localStorage.removeItem('khata_active_user');
             currentUser = null;
-            resetAuthStep();
             showAuthScreen();
         }
 
@@ -522,7 +493,7 @@
             updateDashboard();
         }
 
-        // Data Storage and Application Logic
+        // User Data Handlers
         function loadUserData() {
             customers = JSON.parse(localStorage.getItem(`khata_${currentUser}_customers`)) || [];
             transactions = JSON.parse(localStorage.getItem(`khata_${currentUser}_transactions`)) || [];
@@ -614,7 +585,7 @@
                     <td>${tx.note}</td>
                     <td class="text-red">${tx.type === 'gave' ? '₹' + tx.amount : '-'}</td>
                     <td class="text-green">${tx.type === 'got' ? '₹' + tx.amount : '-'}</td>
-                    <td><button class="delete-btn" onclick="deleteTransaction(${tx.id})">Delete</button> instruction</td>
+                    <td><button class="delete-btn" onclick="deleteTransaction(${tx.id})">Delete</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -750,7 +721,7 @@
             doc.save(`KhataBook_Summary.pdf`);
         }
 
-        // Initialize application
+        // Run application
         initSession();
     </script>
 </body>
