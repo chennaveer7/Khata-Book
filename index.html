@@ -36,10 +36,41 @@
             margin: 0 auto;
         }
 
-        header {
+        /* Login Container Styling */
+        .auth-container {
+            max-width: 400px;
+            margin: 60px auto;
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
             text-align: center;
+        }
+
+        .auth-container h2 {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .auth-toggle {
+            margin-top: 15px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .auth-toggle span {
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 24px;
-            padding: 20px;
+            padding: 20px 24px;
             background: linear-gradient(135deg, #1e3a8a, var(--primary));
             color: white;
             border-radius: 12px;
@@ -47,9 +78,30 @@
         }
 
         header h1 {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 700;
-            letter-spacing: 0.5px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .btn-logout {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .btn-logout:hover {
+            background-color: rgba(255, 255, 255, 0.3);
         }
 
         .dashboard {
@@ -119,6 +171,7 @@
 
         .form-group {
             margin-bottom: 14px;
+            text-align: left;
         }
 
         .form-group label {
@@ -264,106 +317,199 @@
 </head>
 <body>
 
-    <header>
-        <h1>📖 Digital KhataBook</h1>
-    </header>
-
-    <div class="dashboard">
-        <div class="card">
-            <h3>Total You Will Get</h3>
-            <div id="total-get" class="amount text-green">₹0</div>
+    <!-- Authentication Screen -->
+    <div id="auth-screen" class="auth-container">
+        <h2 id="auth-title">Login to KhataBook</h2>
+        <div class="form-group">
+            <label for="auth-username">Username</label>
+            <input type="text" id="auth-username" placeholder="Enter username">
         </div>
-        <div class="card">
-            <h3>Total You Will Give</h3>
-            <div id="total-give" class="amount text-red">₹0</div>
+        <div class="form-group">
+            <label for="auth-password">Password</label>
+            <input type="password" id="auth-password" placeholder="Enter password">
         </div>
-        <div class="card">
-            <h3>Net Balance</h3>
-            <div id="net-balance" class="amount">₹0</div>
+        <button id="auth-btn" class="btn btn-primary" style="width: 100%;" onclick="handleAuth()">Login</button>
+        <div class="auth-toggle">
+            <span id="auth-toggle-btn" onclick="toggleAuthMode()">Don't have an account? Register</span>
         </div>
     </div>
 
-    <div class="main-content">
-        
-        <div class="panel">
-            <h2>Add / Select Customer</h2>
-            <div class="form-group">
-                <input type="text" id="cust-name" placeholder="Enter Customer Name">
+    <!-- Main Application Screen -->
+    <div id="app-screen" style="display: none;">
+        <header>
+            <h1>📖 Digital KhataBook</h1>
+            <div class="user-info">
+                <span>Welcome, <strong id="logged-user-name">User</strong></span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
-            <button class="btn btn-primary" style="width: 100%; margin-bottom: 16px;" onclick="addCustomer()">+ Add Customer</button>
+        </header>
 
-            <h3 style="font-size: 14px; color: var(--text-muted); margin-bottom: 8px;">Customers</h3>
-            <ul class="customer-list" id="customer-list"></ul>
-
-            <button class="btn btn-export" onclick="exportFullSummaryPDF()">📄 Export Summary PDF</button>
+        <div class="dashboard">
+            <div class="card">
+                <h3>Total You Will Get</h3>
+                <div id="total-get" class="amount text-green">₹0</div>
+            </div>
+            <div class="card">
+                <h3>Total You Will Give</h3>
+                <div id="total-give" class="amount text-red">₹0</div>
+            </div>
+            <div class="card">
+                <h3>Net Balance</h3>
+                <div id="net-balance" class="amount">₹0</div>
+            </div>
         </div>
 
-        <div class="panel">
-            <div class="header-action">
-                <h2 id="current-cust-title">Select a Customer</h2>
-                <button id="export-cust-pdf-btn" class="btn-pdf" style="display: none;" onclick="exportCustomerPDF()">📥 Download PDF Statement</button>
-            </div>
-            
-            <div id="transaction-form" style="display: none;">
+        <div class="main-content">
+            <div class="panel">
+                <h2>Add / Select Customer</h2>
                 <div class="form-group">
-                    <label for="tx-date">Transaction Date:</label>
-                    <input type="date" id="tx-date" min="2000-01-01" max="2030-12-31">
+                    <input type="text" id="cust-name" placeholder="Enter Customer Name">
                 </div>
-                <div class="form-group">
-                    <input type="number" id="tx-amount" placeholder="Amount (₹)">
-                </div>
-                <div class="form-group">
-                    <input type="text" id="tx-note" placeholder="Details/Note (e.g., Grocery, Bill)">
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-gave" onclick="addTransaction('gave')">You Gave ₹ (Credit)</button>
-                    <button class="btn btn-got" onclick="addTransaction('got')">You Got ₹ (Debit)</button>
-                </div>
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 16px;" onclick="addCustomer()">+ Add Customer</button>
+
+                <h3 style="font-size: 14px; color: var(--text-muted); margin-bottom: 8px;">Customers</h3>
+                <ul class="customer-list" id="customer-list"></ul>
+
+                <button class="btn btn-export" onclick="exportFullSummaryPDF()">📄 Export Summary PDF</button>
             </div>
 
-            <h3 style="font-size: 14px; color: var(--text-muted);">Transaction History</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Details</th>
-                        <th>You Gave</th>
-                        <th>You Got</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="tx-history"></tbody>
-            </table>
+            <div class="panel">
+                <div class="header-action">
+                    <h2 id="current-cust-title">Select a Customer</h2>
+                    <button id="export-cust-pdf-btn" class="btn-pdf" style="display: none;" onclick="exportCustomerPDF()">📥 Download PDF Statement</button>
+                </div>
+                
+                <div id="transaction-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="tx-date">Transaction Date:</label>
+                        <input type="date" id="tx-date" min="2000-01-01" max="2030-12-31">
+                    </div>
+                    <div class="form-group">
+                        <input type="number" id="tx-amount" placeholder="Amount (₹)">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="tx-note" placeholder="Details/Note (e.g., Grocery, Bill)">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-gave" onclick="addTransaction('gave')">You Gave ₹ (Credit)</button>
+                        <button class="btn btn-got" onclick="addTransaction('got')">You Got ₹ (Debit)</button>
+                    </div>
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+                </div>
+
+                <h3 style="font-size: 14px; color: var(--text-muted);">Transaction History</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Details</th>
+                            <th>You Gave</th>
+                            <th>You Got</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-history"></tbody>
+                </table>
+            </div>
         </div>
 
+        <footer>
+            For Help contact <a href="mailto:chennaveer8@gmail.com">chennaveer8@gmail.com</a>
+        </footer>
     </div>
-
-    <footer>
-        For Help contact <a href="mailto:chennaveer8@gmail.com">chennaveer8@gmail.com</a>
-    </footer>
 
     <script>
-        let customers = JSON.parse(localStorage.getItem('khata_customers')) || [];
-        let transactions = JSON.parse(localStorage.getItem('khata_transactions')) || [];
+        // State variables
+        let isLoginMode = true;
+        let currentUser = null;
+        let customers = [];
+        let transactions = [];
         let selectedCustomerId = null;
 
-        function setDefaultDate() {
-            const today = new Date().toISOString().split('T')[0];
-            const dateInput = document.getElementById('tx-date');
-            dateInput.value = (today >= '2000-01-01' && today <= '2030-12-31') ? today : '2026-01-01';
+        // Initialize session on startup
+        function initSession() {
+            const activeUser = localStorage.getItem('khata_active_user');
+            if (activeUser) {
+                currentUser = activeUser;
+                showAppScreen();
+            } else {
+                showAuthScreen();
+            }
         }
 
-        function init() {
+        // Toggle Login / Register UI
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "Login to KhataBook" : "Register on KhataBook";
+            document.getElementById('auth-btn').innerText = isLoginMode ? "Login" : "Register";
+            document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Don't have an account? Register" : "Already have an account? Login";
+        }
+
+        // Authentication Logic
+        function handleAuth() {
+            const userIn = document.getElementById('auth-username').value.trim();
+            const passIn = document.getElementById('auth-password').value.trim();
+
+            if (!userIn || !passIn) return alert("Please fill in both fields.");
+
+            let users = JSON.parse(localStorage.getItem('khata_users')) || {};
+
+            if (isLoginMode) {
+                if (users[userIn] && users[userIn] === passIn) {
+                    currentUser = userIn;
+                    localStorage.setItem('khata_active_user', currentUser);
+                    showAppScreen();
+                } else {
+                    alert("Invalid username or password.");
+                }
+            } else {
+                if (users[userIn]) return alert("Username already exists!");
+                users[userIn] = passIn;
+                localStorage.setItem('khata_users', JSON.stringify(users));
+                alert("Registration successful! You can now login.");
+                toggleAuthMode();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('khata_active_user');
+            currentUser = null;
+            showAuthScreen();
+        }
+
+        function showAuthScreen() {
+            document.getElementById('auth-screen').style.display = 'block';
+            document.getElementById('app-screen').style.display = 'none';
+        }
+
+        function showAppScreen() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'block';
+            document.getElementById('logged-user-name').innerText = currentUser;
+
+            loadUserData();
             setDefaultDate();
             renderCustomers();
             updateDashboard();
         }
 
+        // User Data Handlers
+        function loadUserData() {
+            customers = JSON.parse(localStorage.getItem(`khata_${currentUser}_customers`)) || [];
+            transactions = JSON.parse(localStorage.getItem(`khata_${currentUser}_transactions`)) || [];
+            selectedCustomerId = null;
+        }
+
         function saveData() {
-            localStorage.setItem('khata_customers', JSON.stringify(customers));
-            localStorage.setItem('khata_transactions', JSON.stringify(transactions));
+            localStorage.setItem(`khata_${currentUser}_customers`, JSON.stringify(customers));
+            localStorage.setItem(`khata_${currentUser}_transactions`, JSON.stringify(transactions));
             updateDashboard();
+        }
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('tx-date');
+            dateInput.value = (today >= '2000-01-01' && today <= '2030-12-31') ? today : '2026-01-01';
         }
 
         function addCustomer() {
@@ -473,7 +619,7 @@
             netElem.className = `amount ${net >= 0 ? 'text-green' : 'text-red'}`;
         }
 
-        // --- Styled PDF Export Functions ---
+        // --- Styled PDF Exports ---
         function exportCustomerPDF() {
             if (!selectedCustomerId) return;
             const cust = customers.find(c => c.id === selectedCustomerId);
@@ -489,7 +635,7 @@
 
             doc.setFontSize(10);
             doc.setTextColor(100, 116, 139);
-            doc.text("Digital Account Statement", 105, 25, { align: "center" });
+            doc.text(`Digital Account Statement - Account: ${currentUser}`, 105, 25, { align: "center" });
 
             // Customer Meta
             doc.setFontSize(11);
@@ -502,7 +648,7 @@
             doc.setTextColor(balance >= 0 ? 22 : 220, balance >= 0 ? 163 : 38, balance >= 0 ? 74 : 38);
             doc.text(statusText, 14, 50);
 
-            // Table Grid with Rows and Columns
+            // Table Grid
             const tableData = custTx.map(tx => [
                 tx.date,
                 tx.note,
@@ -522,8 +668,7 @@
                     2: { cellWidth: 35, textColor: [220, 38, 38] },
                     3: { cellWidth: 35, textColor: [22, 163, 74] }
                 },
-                didDrawPage: function (data) {
-                    // Help Footer at the Bottom
+                didDrawPage: function () {
                     doc.setFontSize(10);
                     doc.setTextColor(100, 116, 139);
                     doc.text("For Help contact chennaveer8@gmail.com", 105, doc.internal.pageSize.height - 12, { align: "center" });
@@ -539,14 +684,13 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // Centered Title
             doc.setFontSize(22);
             doc.setTextColor(37, 99, 235);
             doc.text("KhataBook", 105, 18, { align: "center" });
 
             doc.setFontSize(10);
             doc.setTextColor(100, 116, 139);
-            doc.text("Overall Accounts Ledger Summary", 105, 25, { align: "center" });
+            doc.text(`Overall Accounts Ledger Summary - Account: ${currentUser}`, 105, 25, { align: "center" });
 
             doc.setFontSize(11);
             doc.setTextColor(15, 23, 42);
@@ -567,8 +711,7 @@
                 body: tableData,
                 theme: 'grid',
                 headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
-                didDrawPage: function (data) {
-                    // Help Footer at the Bottom
+                didDrawPage: function () {
                     doc.setFontSize(10);
                     doc.setTextColor(100, 116, 139);
                     doc.text("For Help contact chennaveer8@gmail.com", 105, doc.internal.pageSize.height - 12, { align: "center" });
@@ -578,7 +721,8 @@
             doc.save(`KhataBook_Summary.pdf`);
         }
 
-        init();
+        // Run application
+        initSession();
     </script>
 </body>
 </html>
