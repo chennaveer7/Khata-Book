@@ -834,7 +834,7 @@
             doc.setFont("helvetica", "normal");
             doc.text("Net Balance: ", 14, 54);
             doc.setFont("helvetica", "bold");
-            const netStatus = balance >= 0 ? `You Get Rs. ${balance}` : `You Give Rs. ${Math.abs(balance)}`;
+            const netStatus = balance >= 0 ? `${balance}` : ` ${Math.abs(balance)}`;
             doc.setTextColor(balance >= 0 ? 16 : 239, balance >= 0 ? 185 : 68, balance >= 0 ? 129 : 68);
             doc.text(netStatus, 40, 54);
 
