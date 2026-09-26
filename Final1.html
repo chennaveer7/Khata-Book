@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LedgerFlow — Smart Business & Expense Manager</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- jsPDF & AutoTable Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 30px 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Change 1: Editable Heading */
+        header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            outline: none;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.5);
+            padding-bottom: 2px;
+            cursor: pointer;
+        }
+
+        header h1:focus {
+            border-bottom: 2px solid #ffffff;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .card .amount {
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .text-red { color: var(--danger); }
+        .text-green { color: var(--success); }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 850px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .panel h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: white;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-gave { background-color: var(--danger); flex: 1; }
+        .btn-gave:hover { background-color: #dc2626; }
+
+        .btn-got { background-color: var(--success); flex: 1; }
+        .btn-got:hover { background-color: #059669; }
+
+        .btn-primary { background-color: var(--primary); width: 100%; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-export { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); width: 100%; margin-top: 15px; }
+        .btn-export:hover { background-color: #e2e8f0; }
+
+        .customer-list {
+            list-style: none;
+            max-height: 280px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .customer-item {
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .customer-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .customer-item.active {
+            background-color: #e0e7ff;
+            border-color: #c7d2fe;
+            font-weight: 600;
+        }
+
+        .badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: 6px;
+            text-transform: uppercase;
+        }
+        .badge-cust { background: #dbeafe; color: #1e40af; }
+        .badge-event { background: #fef3c7; color: #92400e; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .delete-btn {
+            color: var(--text-muted);
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-weight: 600;
+            font-size: 12px;
+            transition: color 0.2s ease;
+        }
+
+        .delete-btn:hover { color: var(--danger); }
+
+        .header-action {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .btn-pdf {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <!-- Change 1: Editable Heading -->
+        <h1 id="app-title" contenteditable="true" onblur="saveTitle()" title="Click to edit title">⚡ LedgerFlow</h1>
+        <span style="font-size: 12px; opacity: 0.9;">(Click title to edit)</span>
+    </header>
+
+    <!-- Top Dashboard Summary -->
+    <div class="dashboard">
+        <div class="card">
+            <h3>Total You Will Get</h3>
+            <div id="total-get" class="amount text-green">₹0</div>
+        </div>
+        <div class="card">
+            <h3>Total You Will Give</h3>
+            <div id="total-give" class="amount text-red">₹0</div>
+        </div>
+        <div class="card">
+            <h3>Net Balance</h3>
+            <div id="net-balance" class="amount">₹0</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        
+        <!-- Left Panel: Customers & Events -->
+        <div class="panel">
+            <h2>Customers & Events</h2>
+            <div class="form-group">
+                <input type="text" id="cust-name" placeholder="Name (e.g. Rahul or Wedding)">
+            </div>
+            
+            <!-- Change 2: Category Selector (Customer / Event) -->
+            <div class="form-group">
+                <label for="cust-type">Category Type:</label>
+                <select id="cust-type">
+                    <option value="Customer">👤 Customer</option>
+                    <option value="Event">🎉 Event / Trip</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="addCustomer()">+ Add Entry</button>
+
+            <ul class="customer-list" id="customer-list" style="margin-top: 15px;">
+                <!-- Dynamic List -->
+            </ul>
+
+            <button class="btn btn-export" onclick="exportFullSummaryPDF()">📄 Export Summary PDF</button>
+        </div>
+
+        <!-- Right Panel: Transactions -->
+        <div class="panel">
+            <div class="header-action">
+                <h2 id="current-cust-title">Select an item to view transactions</h2>
+                <button id="export-cust-pdf-btn" class="btn btn-pdf" style="display: none;" onclick="exportCustomerPDF()">📥 Statement PDF</button>
+            </div>
+            
+            <div id="transaction-form" style="display: none;">
+                <div class="form-group">
+                    <label for="tx-date">Transaction Date (2000 - 2030):</label>
+                    <input type="date" id="tx-date" min="2000-01-01" max="2030-12-31">
+                </div>
+
+                <div class="form-group">
+                    <input type="number" id="tx-amount" placeholder="Amount (₹)">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="tx-note" placeholder="Description / Remarks (optional)">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-gave" onclick="addTransaction('gave')">You Gave ₹</button>
+                    <button class="btn btn-got" onclick="addTransaction('got')">You Got ₹</button>
+                </div>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+            </div>
+
+            <!-- Transaction History -->
+            <h3>Transaction Ledger</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Details</th>
+                        <th>You Gave</th>
+                        <th>You Got</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tx-history">
+                    <!-- Dynamic Rows -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        let customers = JSON.parse(localStorage.getItem('lf_customers')) || [];
+        let transactions = JSON.parse(localStorage.getItem('lf_transactions')) || [];
+        let selectedCustomerId = null;
+
+        // Change 1: Save editable header title
+        function saveTitle() {
+            const titleElem = document.getElementById('app-title');
+            localStorage.setItem('lf_app_title', titleElem.innerText);
+        }
+
+        function loadTitle() {
+            const savedTitle = localStorage.getItem('lf_app_title');
+            if (savedTitle) {
+                document.getElementById('app-title').innerText = savedTitle;
+            }
+        }
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('tx-date');
+            if (today >= '2000-01-01' && today <= '2030-12-31') {
+                dateInput.value = today;
+            } else {
+                dateInput.value = '2026-01-01';
+            }
+        }
+
+        function init() {
+            loadTitle();
+            setDefaultDate();
+            renderCustomers();
+            updateDashboard();
+        }
+
+        function saveData() {
+            localStorage.setItem('lf_customers', JSON.stringify(customers));
+            localStorage.setItem('lf_transactions', JSON.stringify(transactions));
+            updateDashboard();
+        }
+
+        function addCustomer() {
+            const nameInput = document.getElementById('cust-name');
+            const typeInput = document.getElementById('cust-type');
+            const name = nameInput.value.trim();
+            const type = typeInput.value;
+
+            if (!name) {
+                alert('Please enter a name!');
+                return;
+            }
+
+            const newCust = { id: Date.now(), name: name, category: type };
+            customers.push(newCust);
+            saveData();
+            renderCustomers();
+            nameInput.value = '';
+            selectCustomer(newCust.id);
+        }
+
+        // Change 3: Delete entry functionality
+        function deleteCustomer(id, event) {
+            event.stopPropagation();
+            if (!confirm("Are you sure you want to delete this entity and all its transactions?")) return;
+
+            customers = customers.filter(c => c.id !== id);
+            transactions = transactions.filter(t => t.customerId !== id);
+
+            if (selectedCustomerId === id) {
+                selectedCustomerId = null;
+                document.getElementById('current-cust-title').innerText = "Select an item to view transactions";
+                document.getElementById('transaction-form').style.display = 'none';
+                document.getElementById('export-cust-pdf-btn').style.display = 'none';
+                document.getElementById('tx-history').innerHTML = '';
+            }
+
+            saveData();
+            renderCustomers();
+        }
+
+        function renderCustomers() {
+            const list = document.getElementById('customer-list');
+            list.innerHTML = '';
+
+            customers.forEach(cust => {
+                const li = document.createElement('li');
+                li.className = `customer-item ${cust.id === selectedCustomerId ? 'active' : ''}`;
+                li.onclick = () => selectCustomer(cust.id);
+                
+                const custBalance = getCustomerBalance(cust.id);
+                let balClass = custBalance >= 0 ? 'text-green' : 'text-red';
+                const badgeClass = cust.category === 'Event' ? 'badge-event' : 'badge-cust';
+
+                li.innerHTML = `
+                    <div>
+                        <span>${cust.name}</span>
+                        <span class="badge ${badgeClass}">${cust.category || 'Customer'}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="${balClass}">₹${Math.abs(custBalance)}</span>
+                        <button class="delete-btn" title="Delete" onclick="deleteCustomer(${cust.id}, event)">🗑️</button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function selectCustomer(id) {
+            selectedCustomerId = id;
+            const cust = customers.find(c => c.id === id);
+            
+            document.getElementById('current-cust-title').innerText = `Statement: ${cust.name}`;
+            document.getElementById('transaction-form').style.display = 'block';
+            document.getElementById('export-cust-pdf-btn').style.display = 'inline-flex';
+
+            renderCustomers();
+            renderTransactions();
+        }
+
+        function addTransaction(type) {
+            const amountInput = document.getElementById('tx-amount');
+            const noteInput = document.getElementById('tx-note');
+            const dateInput = document.getElementById('tx-date');
+
+            const amount = parseFloat(amountInput.value);
+            const note = noteInput.value.trim() || (type === 'gave' ? 'You Gave' : 'You Got');
+            const selectedDate = dateInput.value;
+
+            if (!selectedDate || selectedDate < '2000-01-01' || selectedDate > '2030-12-31') {
+                alert('Please select a date between 2000 and 2030.');
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount!');
+                return;
+            }
+
+            const newTx = {
+                id: Date.now(),
+                customerId: selectedCustomerId,
+                type: type,
+                amount: amount,
+                note: note,
+                date: selectedDate
+            };
+
+            transactions.push(newTx);
+            saveData();
+            renderTransactions();
+            renderCustomers();
+
+            amountInput.value = '';
+            noteInput.value = '';
+        }
+
+        function renderTransactions() {
+            const tbody = document.getElementById('tx-history');
+            tbody.innerHTML = '';
+
+            const custTx = transactions.filter(t => t.customerId === selectedCustomerId);
+
+            if (custTx.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 20px;">No transaction records found.</td></tr>';
+                return;
+            }
+
+            custTx.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            custTx.forEach(tx => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${tx.date}</td>
+                    <td>${tx.note}</td>
+                    <td class="text-red">${tx.type === 'gave' ? '₹' + tx.amount : '-'}</td>
+                    <td class="text-green">${tx.type === 'got' ? '₹' + tx.amount : '-'}</td>
+                    <td><button class="delete-btn" onclick="deleteTransaction(${tx.id})">Remove</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteTransaction(txId) {
+            transactions = transactions.filter(t => t.id !== txId);
+            saveData();
+            renderTransactions();
+            renderCustomers();
+        }
+
+        function getCustomerBalance(custValId) {
+            const custTx = transactions.filter(t => t.customerId === custValId);
+            return custTx.reduce((acc, tx) => tx.type === 'gave' ? acc + tx.amount : acc - tx.amount, 0);
+        }
+
+        function updateDashboard() {
+            let totalGet = 0, totalGive = 0;
+
+            customers.forEach(cust => {
+                const bal = getCustomerBalance(cust.id);
+                if (bal > 0) totalGet += bal;
+                else totalGive += Math.abs(bal);
+            });
+
+            document.getElementById('total-get').innerText = `₹${totalGet}`;
+            document.getElementById('total-give').innerText = `₹${totalGive}`;
+
+            const net = totalGet - totalGive;
+            const netElem = document.getElementById('net-balance');
+            netElem.innerText = `₹${Math.abs(net)} ${net >= 0 ? '(Get)' : '(Pay)'}`;
+            netElem.className = `amount ${net >= 0 ? 'text-green' : 'text-red'}`;
+        }
+
+        // Modern PDF Export - Customer/Event Statement
+        function exportCustomerPDF() {
+            if (!selectedCustomerId) return;
+            const cust = customers.find(c => c.id === selectedCustomerId);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const balance = getCustomerBalance(cust.id);
+            const custTx = transactions.filter(t => t.customerId === selectedCustomerId);
+            custTx.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const appTitle = document.getElementById('app-title').innerText;
+
+            // Header Banner
+            doc.setFillColor(79, 70, 229);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(255, 255, 255);
+            doc.text(`${appTitle} Statement`, 14, 20);
+
+            // Statement Metadata
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Name: ${cust.name} (${cust.category || 'Customer'})`, 14, 40);
+            doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 46);
+
+            const statusText = balance >= 0 ? `Net Balance: You Get Rs. ${balance}` : `Net Balance: You Pay Rs. ${Math.abs(balance)}`;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.setTextColor(balance >= 0 ? 16 : 239, balance >= 0 ? 185 : 68, balance >= 0 ? 129 : 68);
+            doc.text(statusText, 14, 54);
+
+            const tableRows = custTx.map(tx => [
+                tx.date,
+                tx.note,
+                tx.type === 'gave' ? `Rs. ${tx.amount}` : '-',
+                tx.type === 'got' ? `Rs. ${tx.amount}` : '-'
+            ]);
+
+            doc.autoTable({
+                startY: 62,
+                head: [['Date', 'Remarks / Note', ' You Gave', 'You Got']],
+                body: tableRows,
+                headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                styles: { fontSize: 9, cellPadding: 4 }
+            });
+
+            doc.save(`${cust.name}_Statement.pdf`);
+        }
+
+        // Modern PDF Export - Overall Summary
+        function exportFullSummaryPDF() {
+            if (customers.length === 0) {
+                alert("No records to export!");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const appTitle = document.getElementById('app-title').innerText;
+
+            doc.setFillColor(79, 70, 229);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(255, 255, 255);
+            doc.text(`${appTitle} Overall Summary`, 14, 20);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 40);
+
+            let totalGet = 0, totalGive = 0;
+            const tableRows = customers.map(cust => {
+                const bal = getCustomerBalance(cust.id);
+                if (bal > 0) totalGet += bal;
+                else totalGive += Math.abs(bal);
+                return [cust.name, cust.category || 'Customer', bal >= 0 ? 'You Get' : 'You Give', `Rs. ${Math.abs(bal)}`];
+            });
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(16, 185, 129);
+            doc.text(`Total You Get: Rs. ${totalGet}`, 14, 48);
+            doc.setTextColor(239, 68, 68);
+            doc.text(`Total You Pay: Rs. ${totalGive}`, 100, 48);
+
+            doc.autoTable({
+                startY: 56,
+                head: [['Name', 'Category', 'Status', 'Balance Amount']],
+                body: tableRows,
+                headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                styles: { fontSize: 9, cellPadding: 4 }
+            });
+
+            doc.save(`Ledger_Overall_Summary.pdf`);
+        }
+
+        init();
+    </script>
+</body>
+</html>
