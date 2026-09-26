@@ -42,6 +42,50 @@
             margin: 0 auto;
         }
 
+        /* Authentication Screen Styles */
+        .auth-container {
+            max-width: 400px;
+            margin: 60px auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .auth-header h2 {
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Header Styles */
         header {
             display: flex;
             justify-content: space-between;
@@ -54,7 +98,6 @@
             box-shadow: var(--shadow-lg);
         }
 
-        /* Change 1: Editable Heading */
         header h1 {
             font-size: 22px;
             font-weight: 700;
@@ -70,6 +113,29 @@
 
         header h1:focus {
             border-bottom: 2px solid #ffffff;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.35);
         }
 
         .dashboard {
@@ -291,117 +357,237 @@
 </head>
 <body>
 
-    <header>
-        <!-- Change 1: Editable Heading -->
-        <h1 id="app-title" contenteditable="true" onblur="saveTitle()" title="Click to edit title">⚡ LedgerFlow</h1>
-        <span style="font-size: 12px; opacity: 0.9;">(Click title to edit)</span>
-    </header>
+    <!-- AUTHENTICATION CONTAINER (LOGIN / REGISTER) -->
+    <div id="auth-section" class="auth-container">
+        <div class="auth-header">
+            <h2>⚡ LedgerFlow</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Manage your accounts securely</p>
+        </div>
 
-    <!-- Top Dashboard Summary -->
-    <div class="dashboard">
-        <div class="card">
-            <h3>Total You Will Get</h3>
-            <div id="total-get" class="amount text-green">₹0</div>
+        <div class="auth-tabs">
+            <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+            <div id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Register</div>
         </div>
-        <div class="card">
-            <h3>Total You Will Give</h3>
-            <div id="total-give" class="amount text-red">₹0</div>
-        </div>
-        <div class="card">
-            <h3>Net Balance</h3>
-            <div id="net-balance" class="amount">₹0</div>
-        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" required placeholder="Enter your username">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" required placeholder="Enter your password">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Sign In</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="register-form" onsubmit="handleRegister(event)" style="display: none;">
+            <div class="form-group">
+                <label for="reg-username">Choose Username</label>
+                <input type="text" id="reg-username" required placeholder="Create a username">
+            </div>
+            <div class="form-group">
+                <label for="reg-password">Choose Password</label>
+                <input type="password" id="reg-password" required placeholder="Create a password">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Create Account</button>
+        </form>
     </div>
 
-    <div class="main-content">
+    <!-- MAIN APP INTERFACE (HIDDEN BY DEFAULT) -->
+    <div id="app-section" style="display: none;">
         
-        <!-- Left Panel: Customers & Events -->
-        <div class="panel">
-            <h2>Customers & Events</h2>
-            <div class="form-group">
-                <input type="text" id="cust-name" placeholder="Name (e.g. Rahul or Wedding)">
+        <header>
+            <h1 id="app-title" contenteditable="true" onblur="saveTitle()" title="Click to edit title">⚡ LedgerFlow</h1>
+            <div class="user-info">
+                <span>Logged in as: <strong id="logged-user-name">User</strong></span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
-            
-            <!-- Change 2: Category Selector (Customer / Event) -->
-            <div class="form-group">
-                <label for="cust-type">Category Type:</label>
-                <select id="cust-type">
-                    <option value="Customer">👤 Customer</option>
-                    <option value="Event">🎉 Event / Trip</option>
-                </select>
+        </header>
+
+        <!-- Top Dashboard Summary -->
+        <div class="dashboard">
+            <div class="card">
+                <h3>Total You Will Get</h3>
+                <div id="total-get" class="amount text-green">₹0</div>
             </div>
-
-            <button class="btn btn-primary" onclick="addCustomer()">+ Add Entry</button>
-
-            <ul class="customer-list" id="customer-list" style="margin-top: 15px;">
-                <!-- Dynamic List -->
-            </ul>
-
-            <button class="btn btn-export" onclick="exportFullSummaryPDF()">📄 Export Summary PDF</button>
+            <div class="card">
+                <h3>Total You Will Give</h3>
+                <div id="total-give" class="amount text-red">₹0</div>
+            </div>
+            <div class="card">
+                <h3>Net Balance</h3>
+                <div id="net-balance" class="amount">₹0</div>
+            </div>
         </div>
 
-        <!-- Right Panel: Transactions -->
-        <div class="panel">
-            <div class="header-action">
-                <h2 id="current-cust-title">Select an item to view transactions</h2>
-                <button id="export-cust-pdf-btn" class="btn btn-pdf" style="display: none;" onclick="exportCustomerPDF()">📥 Statement PDF</button>
-            </div>
+        <div class="main-content">
             
-            <div id="transaction-form" style="display: none;">
+            <!-- Left Panel: Customers & Events -->
+            <div class="panel">
+                <h2>Customers & Events</h2>
                 <div class="form-group">
-                    <label for="tx-date">Transaction Date (2000 - 2030):</label>
-                    <input type="date" id="tx-date" min="2000-01-01" max="2030-12-31">
+                    <input type="text" id="cust-name" placeholder="Name (e.g. Rahul or Wedding)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="cust-type">Category Type:</label>
+                    <select id="cust-type">
+                        <option value="Customer">👤 Customer</option>
+                        <option value="Event">🎉 Event / Trip</option>
+                    </select>
                 </div>
 
-                <div class="form-group">
-                    <input type="number" id="tx-amount" placeholder="Amount (₹)">
-                </div>
-                <div class="form-group">
-                    <input type="text" id="tx-note" placeholder="Description / Remarks (optional)">
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-gave" onclick="addTransaction('gave')">You Gave ₹</button>
-                    <button class="btn btn-got" onclick="addTransaction('got')">You Got ₹</button>
-                </div>
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+                <button class="btn btn-primary" onclick="addCustomer()">+ Add Entry</button>
+
+                <ul class="customer-list" id="customer-list" style="margin-top: 15px;">
+                    <!-- Dynamic List -->
+                </ul>
+
+                <button class="btn btn-export" onclick="exportFullSummaryPDF()">📄 Export Summary PDF</button>
             </div>
 
-            <!-- Transaction History -->
-            <h3>Transaction Ledger</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Details</th>
-                        <th>You Gave</th>
-                        <th>You Got</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="tx-history">
-                    <!-- Dynamic Rows -->
-                </tbody>
-            </table>
-        </div>
+            <!-- Right Panel: Transactions -->
+            <div class="panel">
+                <div class="header-action">
+                    <h2 id="current-cust-title">Select an item to view transactions</h2>
+                    <button id="export-cust-pdf-btn" class="btn btn-pdf" style="display: none;" onclick="exportCustomerPDF()">📥 Statement PDF</button>
+                </div>
+                
+                <div id="transaction-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="tx-date">Transaction Date (2000 - 2030):</label>
+                        <input type="date" id="tx-date" min="2000-01-01" max="2030-12-31">
+                    </div>
 
+                    <div class="form-group">
+                        <input type="number" id="tx-amount" placeholder="Amount (₹)">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="tx-note" placeholder="Description / Remarks (optional)">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-gave" onclick="addTransaction('gave')">You Gave ₹</button>
+                        <button class="btn btn-got" onclick="addTransaction('got')">You Got ₹</button>
+                    </div>
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+                </div>
+
+                <!-- Transaction History -->
+                <h3>Transaction Ledger</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Details</th>
+                            <th>You Gave</th>
+                            <th>You Got</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-history">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
     </div>
 
     <script>
-        let customers = JSON.parse(localStorage.getItem('lf_customers')) || [];
-        let transactions = JSON.parse(localStorage.getItem('lf_transactions')) || [];
+        let currentUser = null;
+        let customers = [];
+        let transactions = [];
         let selectedCustomerId = null;
 
-        // Change 1: Save editable header title
+        // AUTHENTICATION LOGIC
+        function switchAuthTab(tab) {
+            document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+            document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+            document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+
+            let users = JSON.parse(localStorage.getItem('lf_users')) || {};
+
+            if (users[username]) {
+                alert('Username already exists! Please choose a different one.');
+                return;
+            }
+
+            users[username] = { password: password };
+            localStorage.setItem('lf_users', JSON.stringify(users));
+
+            alert('Account created successfully! Please log in.');
+            switchAuthTab('login');
+            document.getElementById('login-username').value = username;
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            let users = JSON.parse(localStorage.getItem('lf_users')) || {};
+
+            if (!users[username] || users[username].password !== password) {
+                alert('Invalid username or password!');
+                return;
+            }
+
+            currentUser = username;
+            localStorage.setItem('lf_active_user', username);
+            startApp();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('lf_active_user');
+            document.getElementById('app-section').style.display = 'none';
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('login-form').reset();
+            document.getElementById('register-form').reset();
+        }
+
+        function startApp() {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'block';
+            document.getElementById('logged-user-name').innerText = currentUser;
+
+            loadUserData();
+            loadTitle();
+            setDefaultDate();
+            renderCustomers();
+            updateDashboard();
+        }
+
+        // USER ISOLATED DATA MANAGEMENT
+        function loadUserData() {
+            customers = JSON.parse(localStorage.getItem(`lf_${currentUser}_customers`)) || [];
+            transactions = JSON.parse(localStorage.getItem(`lf_${currentUser}_transactions`)) || [];
+        }
+
+        function saveData() {
+            localStorage.setItem(`lf_${currentUser}_customers`, JSON.stringify(customers));
+            localStorage.setItem(`lf_${currentUser}_transactions`, JSON.stringify(transactions));
+            updateDashboard();
+        }
+
         function saveTitle() {
             const titleElem = document.getElementById('app-title');
-            localStorage.setItem('lf_app_title', titleElem.innerText);
+            localStorage.setItem(`lf_${currentUser}_title`, titleElem.innerText);
         }
 
         function loadTitle() {
-            const savedTitle = localStorage.getItem('lf_app_title');
-            if (savedTitle) {
-                document.getElementById('app-title').innerText = savedTitle;
-            }
+            const savedTitle = localStorage.getItem(`lf_${currentUser}_title`);
+            document.getElementById('app-title').innerText = savedTitle || '⚡ LedgerFlow';
         }
 
         function setDefaultDate() {
@@ -412,19 +598,6 @@
             } else {
                 dateInput.value = '2026-01-01';
             }
-        }
-
-        function init() {
-            loadTitle();
-            setDefaultDate();
-            renderCustomers();
-            updateDashboard();
-        }
-
-        function saveData() {
-            localStorage.setItem('lf_customers', JSON.stringify(customers));
-            localStorage.setItem('lf_transactions', JSON.stringify(transactions));
-            updateDashboard();
         }
 
         function addCustomer() {
@@ -446,7 +619,6 @@
             selectCustomer(newCust.id);
         }
 
-        // Change 3: Delete entry functionality
         function deleteCustomer(id, event) {
             event.stopPropagation();
             if (!confirm("Are you sure you want to delete this entity and all its transactions?")) return;
@@ -611,7 +783,6 @@
 
             const appTitle = document.getElementById('app-title').innerText;
 
-            // Header Banner
             doc.setFillColor(79, 70, 229);
             doc.rect(0, 0, 210, 30, 'F');
             doc.setFont("helvetica", "bold");
@@ -619,17 +790,17 @@
             doc.setTextColor(255, 255, 255);
             doc.text(`${appTitle} Statement`, 14, 20);
 
-            // Statement Metadata
             doc.setFontSize(10);
             doc.setTextColor(100, 100, 100);
             doc.text(`Name: ${cust.name} (${cust.category || 'Customer'})`, 14, 40);
-            doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 46);
+            doc.text(`User Account: ${currentUser}`, 14, 46);
+            doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 52);
 
             const statusText = balance >= 0 ? `Net Balance: You Get Rs. ${balance}` : `Net Balance: You Pay Rs. ${Math.abs(balance)}`;
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.setTextColor(balance >= 0 ? 16 : 239, balance >= 0 ? 185 : 68, balance >= 0 ? 129 : 68);
-            doc.text(statusText, 14, 54);
+            doc.text(statusText, 14, 60);
 
             const tableRows = custTx.map(tx => [
                 tx.date,
@@ -639,7 +810,7 @@
             ]);
 
             doc.autoTable({
-                startY: 62,
+                startY: 68,
                 head: [['Date', 'Remarks / Note', ' You Gave', 'You Got']],
                 body: tableRows,
                 headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -670,7 +841,8 @@
 
             doc.setFontSize(10);
             doc.setTextColor(100, 100, 100);
-            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 40);
+            doc.text(`User Account: ${currentUser}`, 14, 40);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 46);
 
             let totalGet = 0, totalGive = 0;
             const tableRows = customers.map(cust => {
@@ -683,12 +855,12 @@
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(16, 185, 129);
-            doc.text(`Total You Get: Rs. ${totalGet}`, 14, 48);
+            doc.text(`Total You Get: Rs. ${totalGet}`, 14, 54);
             doc.setTextColor(239, 68, 68);
-            doc.text(`Total You Pay: Rs. ${totalGive}`, 100, 48);
+            doc.text(`Total You Pay: Rs. ${totalGive}`, 100, 54);
 
             doc.autoTable({
-                startY: 56,
+                startY: 62,
                 head: [['Name', 'Category', 'Status', 'Balance Amount']],
                 body: tableRows,
                 headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -699,7 +871,14 @@
             doc.save(`Ledger_Overall_Summary.pdf`);
         }
 
-        init();
+        // Initialize Check
+        window.onload = function() {
+            const activeUser = localStorage.getItem('lf_active_user');
+            if (activeUser) {
+                currentUser = activeUser;
+                startApp();
+            }
+        };
     </script>
 </body>
 </html>
